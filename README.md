@@ -30,6 +30,7 @@ required status check passes. **Validated end-to-end.**
 ```bash
 export GH_OWNER=<your-github-user-or-org>
 export REPO_NAME=changeflow-test-native-auto-merge   # or whatever you name it
+export REVIEWER_LOGIN=<github-login-for-the-required-reviewer>   # defaults to punitlad
 ./setup.sh
 ```
 
@@ -38,8 +39,8 @@ export REPO_NAME=changeflow-test-native-auto-merge   # or whatever you name it
 2. Turn on "Allow auto-merge" (`PATCH /repos/{owner}/{repo}` `allow_auto_merge=true`)
 3. Create a branch ruleset on `main`: require a pull request + the `validate` status check,
    no required reviewers
-4. Create the `production` environment with `punitlad` as a required reviewer (for the
-   approval step — `CHANGEFLOW_APPROVAL_MODE=pending_deployments`)
+4. Create the `production` environment with `$REVIEWER_LOGIN` (`punitlad` by default) as a
+   required reviewer (for the approval step — `CHANGEFLOW_APPROVAL_MODE=pending_deployments`)
 
 Then **install your GitHub App on this repo** (Settings → GitHub Apps → your App → configure
 → add this repo) — `setup.sh` can't do that part, it's an App-installation action on
@@ -54,7 +55,7 @@ export CHANGEFLOW_MERGE_MODE=native_auto_merge
 export CHANGEFLOW_MERGE_METHOD=squash
 export CHANGEFLOW_APPROVAL_MODE=pending_deployments
 export CHANGEFLOW_PIPELINE_ENVIRONMENT=production
-export CHANGEFLOW_APPROVER_TOKEN=<a PAT for punitlad with repo + workflow scope>
+export CHANGEFLOW_APPROVER_TOKEN=<a PAT for whoever REVIEWER_LOGIN was set to (punitlad by default), with repo + workflow scope>
 # ...plus CHANGEFLOW_APP_ID / CHANGEFLOW_APP_PRIVATE_KEY / CHANGEFLOW_INSTALLATION_ID
 uvicorn changeflow.api:app
 curl -XPOST localhost:8000/team-onboardings -d '{"team":"payments","requested_by":"you"}'
