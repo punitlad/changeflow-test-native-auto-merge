@@ -2,7 +2,7 @@
 
 Validates `CHANGEFLOW_MERGE_MODE=native_auto_merge` — changeflow enables GitHub's built-in
 auto-merge via `enablePullRequestAutoMerge`, and GitHub merges the PR itself once the
-required status check passes.
+required status check passes. **Validated end-to-end.**
 
 ## What's here
 
@@ -64,4 +64,20 @@ curl -XPOST localhost:8000/team-onboardings -d '{"team":"payments","requested_by
 
 `GET /team-onboardings/{id}` reaches `phase: succeeded`, having passed through `pr_open` →
 `merging` → `merged` → `pipeline_running` without changeflow ever touching the merge button —
-GitHub did it once `validate` went green.
+GitHub did it once `validate` went green. In testing, `merging` → `merged` took ~30-40s (the
+wait on `validate`) — noticeably slower than `ruleset_bypass`'s near-instant merge.
+
+## Trade-offs for team discussion
+
+- **Moderate trust grant** — no bypass list entry, no elevated REST merge rights; the App
+  only ever asks GitHub to auto-merge once checks pass, same mechanism any human's PR with
+  auto-merge enabled would use.
+- **Can't require a review alongside it.** A GitHub App can't approve its own PR, so if their
+  branch ruleset requires an approving review (common for anything touching production config),
+  this mode simply never merges — it waits forever. Worth asking upfront whether the target
+  repo's ruleset already requires reviews.
+- **Slower than `ruleset_bypass`** by however long their required checks take to run — fine
+  for a fast CI job, a real concern if their checks are slow or flaky.
+- **Easiest to explain to a target team**, since nothing about trust changes: "allow our App's
+  PR to auto-merge like anyone else's, once your own checks pass" is a one-line ask with no new
+  bypass concept to approve.
